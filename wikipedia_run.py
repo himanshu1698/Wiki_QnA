@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from transformers import pipeline
-import speech_recognition as sr
 from googletrans import Translator
 
 def search_wikipedia(query):
@@ -76,23 +75,7 @@ def get_wikipedia_content(page_id):
     else:
         return None
     
-def voice_search():
-    recognizer = sr.Recognizer()
 
-    with sr.Microphone() as source:
-        st.write("🎤 Speak your query:")
-        audio = recognizer.listen(source, timeout=5)
-
-    try:
-        user_query = recognizer.recognize_google(audio, language="en-IN")
-        st.write(f"🗣️ You said: '{user_query}'")
-        return user_query
-    except sr.UnknownValueError:
-        st.warning("❌ Sorry, could not understand your speech. Please try again.")
-        return None
-    except sr.RequestError as e:
-        st.warning(f"❌ Error connecting to Google Speech Recognition service: {e}")
-        return None
 
 # Function to translate text to Hindi
 def translate_to_hindi(text):
@@ -106,58 +89,52 @@ def main():
     st.title("🌐 Wikipedia Search and QA App")
 
     # User input for Wikipedia search
-    st.sidebar.header("Options")
     user_query = st.text_input("🔍 Enter the name of anything you want to search on Wikipedia:")
 
-    if user_query:
-        # Voice search option
-        voice_search_enabled = st.checkbox("🎤 Enable Voice Search")
-        if voice_search_enabled:
-            user_query = voice_search()
 
-        search_results = search_wikipedia(user_query)
+    search_results = search_wikipedia(user_query)
 
-        if not search_results:
-            st.warning(f"❌ No results found for '{user_query}' on Wikipedia.")
-        else:
-            st.write("Choose a Wikipedia page:")
-            for i, result in enumerate(search_results, 1):
-                st.write(f"{i}. {result['title']}")
+    if not search_results:
+        st.warning(f"❌ No results found for '{user_query}' on Wikipedia.")
+    else:
+        st.write("Choose a Wikipedia page:")
+        for i, result in enumerate(search_results, 1):
+            st.write(f"{i}. {result['title']}")
 
-            choice = st.number_input("👉 Enter the number corresponding to your choice:", min_value=1, max_value=len(search_results))
+        choice = st.number_input("👉 Enter the number corresponding to your choice:", min_value=1, max_value=len(search_results))
 
-            if 1 <= choice <= len(search_results):
-                selected_page_id = search_results[int(choice) - 1]['pageid']
-                content = get_wikipedia_content(selected_page_id)
+        if 1 <= choice <= len(search_results):
+            selected_page_id = search_results[int(choice) - 1]['pageid']
+            content = get_wikipedia_content(selected_page_id)
 
-                if content:
-                    st.write(content)
+            if content:
+                st.write(content)
 
-                    qa_model = pipeline("question-answering")
-                    user_question = st.text_input("💬 Ask a question about the article:")
-                    if user_question:
-                        answer = qa_model(question=user_question, context=content)
-                        st.write(f"**Question:** {user_question}")
-                        st.write(f"**Answer:** {answer['answer']}")
+                qa_model = pipeline("question-answering")
+                user_question = st.text_input("💬 Ask a question about the article:")
+                if user_question:
+                    answer = qa_model(question=user_question, context=content)
+                    st.write(f"**Question:** {user_question}")
+                    st.write(f"**Answer:** {answer['answer']}")
 
-                    # Language translation option
-                    translate_to_hindi_enabled = st.checkbox("🌐 Translate to Hindi")
-                    if translate_to_hindi_enabled:
-                        st.subheader("Translated Content (Hindi)")
-                        translated_content = translate_to_hindi(content)
-                        st.write(translated_content)
+                # Language translation option
+                translate_to_hindi_enabled = st.checkbox("🌐 Translate to Hindi")
+                if translate_to_hindi_enabled:
+                    st.subheader("Translated Content (Hindi)")
+                    translated_content = translate_to_hindi(content)
+                    st.write(translated_content)
 
-                    # Ask the user if they want to read news articles
-                    read_news = st.button("📰 Read Latest News Articles")
-                    if read_news:
-                        topic_for_news = user_query
-                        news_articles = get_latest_news(topic_for_news)
-                        display_news_articles(news_articles)
+                # Ask the user if they want to read news articles
+                read_news = st.button("📰 Read Latest News Articles")
+                if read_news:
+                    topic_for_news = user_query
+                    news_articles = get_latest_news(topic_for_news)
+                    display_news_articles(news_articles)
 
-                else:
-                    st.warning(f"❌ Failed to retrieve content for the selected page.")
             else:
-                st.warning("❌ Invalid choice.")
+                st.warning(f"❌ Failed to retrieve content for the selected page.")
+        else:
+            st.warning("❌ Invalid choice.")
 
 if __name__ == "__main__":
     main()
