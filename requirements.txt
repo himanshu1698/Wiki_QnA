@@ -2,5 +2,3 @@ transformers
 torch
 sentence_transformers
 bs4
-googletrans
-SpeechRecognition
