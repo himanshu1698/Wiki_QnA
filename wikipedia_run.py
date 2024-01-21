@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from transformers import pipeline
+import speech_recognition as sr
+from googletrans import Translator
 
 def search_wikipedia(query):
     base_url = "https://en.wikipedia.org/w/api.php"
@@ -73,15 +75,46 @@ def get_wikipedia_content(page_id):
         return clean_text.strip()
     else:
         return None
+    
+def voice_search():
+    recognizer = sr.Recognizer()
+
+    with sr.Microphone() as source:
+        st.write("🎤 Speak your query:")
+        audio = recognizer.listen(source, timeout=5)
+
+    try:
+        user_query = recognizer.recognize_google(audio, language="en-IN")
+        st.write(f"🗣️ You said: '{user_query}'")
+        return user_query
+    except sr.UnknownValueError:
+        st.warning("❌ Sorry, could not understand your speech. Please try again.")
+        return None
+    except sr.RequestError as e:
+        st.warning(f"❌ Error connecting to Google Speech Recognition service: {e}")
+        return None
+
+# Function to translate text to Hindi
+def translate_to_hindi(text):
+    translator = Translator()
+    translation = translator.translate(text, dest="hi")
+    return translation.text
+
 
 # Main function
 def main():
     st.title("🌐 Wikipedia Search and QA App")
 
     # User input for Wikipedia search
+    st.sidebar.header("Options")
     user_query = st.text_input("🔍 Enter the name of anything you want to search on Wikipedia:")
 
     if user_query:
+        # Voice search option
+        voice_search_enabled = st.checkbox("🎤 Enable Voice Search")
+        if voice_search_enabled:
+            user_query = voice_search()
+
         search_results = search_wikipedia(user_query)
 
         if not search_results:
@@ -100,7 +133,6 @@ def main():
                 if content:
                     st.write(content)
 
-                    # BERT-based question answering
                     qa_model = pipeline("question-answering")
                     user_question = st.text_input("💬 Ask a question about the article:")
                     if user_question:
@@ -108,8 +140,15 @@ def main():
                         st.write(f"**Question:** {user_question}")
                         st.write(f"**Answer:** {answer['answer']}")
 
+                    # Language translation option
+                    translate_to_hindi_enabled = st.checkbox("🌐 Translate to Hindi")
+                    if translate_to_hindi_enabled:
+                        st.subheader("Translated Content (Hindi)")
+                        translated_content = translate_to_hindi(content)
+                        st.write(translated_content)
+
                     # Ask the user if they want to read news articles
-                    read_news = st.button("📰 Read Latest News Articles on Guardian:")
+                    read_news = st.button("📰 Read Latest News Articles")
                     if read_news:
                         topic_for_news = user_query
                         news_articles = get_latest_news(topic_for_news)
