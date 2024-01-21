@@ -84,41 +84,41 @@ def main():
     if user_query:
         search_results = search_wikipedia(user_query)
 
-    if not search_results:
-        st.warning(f"❌ No results found for '{user_query}' on Wikipedia.")
-    else:
-        st.write("Choose a Wikipedia page:")
-        for i, result in enumerate(search_results, 1):
-            st.write(f"{i}. {result['title']}")
-
-        choice = st.number_input("👉 Enter the number corresponding to your choice:", min_value=1, max_value=len(search_results))
-
-        if 1 <= choice <= len(search_results):
-            selected_page_id = search_results[int(choice) - 1]['pageid']
-            content = get_wikipedia_content(selected_page_id)
-
-            if content:
-                st.write(content)
-
-                # BERT-based question answering
-                qa_model = pipeline("question-answering")
-                user_question = st.text_input("💬 Ask a question about the article:")
-                if user_question:
-                    answer = qa_model(question=user_question, context=content)
-                    st.write(f"**Question:** {user_question}")
-                    st.write(f"**Answer:** {answer['answer']}")
-
-                # Ask the user if they want to read news articles
-                read_news = st.button("📰 Read Latest News Articles on Guardian:")
-                if read_news:
-                    topic_for_news = user_query
-                    news_articles = get_latest_news(topic_for_news)
-                    display_news_articles(news_articles)
-
-            else:
-                st.warning(f"❌ Failed to retrieve content for the selected page.")
+        if not search_results:
+            st.warning(f"❌ No results found for '{user_query}' on Wikipedia.")
         else:
-            st.warning("❌ Invalid choice.")
+            st.write("Choose a Wikipedia page:")
+            for i, result in enumerate(search_results, 1):
+                st.write(f"{i}. {result['title']}")
+
+            choice = st.number_input("👉 Enter the number corresponding to your choice:", min_value=1, max_value=len(search_results))
+
+            if 1 <= choice <= len(search_results):
+                selected_page_id = search_results[int(choice) - 1]['pageid']
+                content = get_wikipedia_content(selected_page_id)
+
+                if content:
+                    st.write(content)
+
+                    # BERT-based question answering
+                    qa_model = pipeline("question-answering")
+                    user_question = st.text_input("💬 Ask a question about the article:")
+                    if user_question:
+                        answer = qa_model(question=user_question, context=content)
+                        st.write(f"**Question:** {user_question}")
+                        st.write(f"**Answer:** {answer['answer']}")
+
+                    # Ask the user if they want to read news articles
+                    read_news = st.button("📰 Read Latest News Articles")
+                    if read_news:
+                        topic_for_news = user_query
+                        news_articles = get_latest_news(topic_for_news)
+                        display_news_articles(news_articles)
+
+                else:
+                    st.warning(f"❌ Failed to retrieve content for the selected page.")
+            else:
+                st.warning("❌ Invalid choice.")
 
 if __name__ == "__main__":
     main()
