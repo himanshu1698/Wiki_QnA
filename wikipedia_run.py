@@ -20,6 +20,34 @@ def search_wikipedia(query):
     search_results = data['query']['search']
     return search_results
 
+
+# Function to get latest news articles from The Guardian
+def get_latest_news(topic):
+    api_key = "YOUR_GUARDIAN_API_KEY"  # Replace with your actual API key
+    base_url = "https://content.guardianapis.com/search"
+    params = {
+        'q': topic,
+        'api-key': api_key,
+        'show-fields': 'headline,shortUrl',
+        'order-by': 'newest'
+    }
+
+    response = requests.get(base_url, params=params)
+    data = response.json()
+
+    # Extract news articles
+    articles = data.get('response', {}).get('results', [])
+    return articles
+
+def display_news_articles(articles):
+    if not articles:
+        st.warning("No news articles found for this topic.")
+    else:
+        st.write("Latest News Articles:")
+        for article in articles:
+            st.write(f"- [{article['webTitle']}]({article['webUrl']})")
+
+
 def get_wikipedia_content(page_id):
     base_url = "https://en.wikipedia.org/w/api.php"
     params = {
@@ -46,6 +74,7 @@ def get_wikipedia_content(page_id):
     else:
         return None
 
+# Main function
 def main():
     st.title("🌐 Wikipedia Search and QA App")
 
@@ -78,6 +107,13 @@ def main():
                         answer = qa_model(question=user_question, context=content)
                         st.write(f"**Question:** {user_question}")
                         st.write(f"**Answer:** {answer['answer']}")
+
+                    # Ask the user if they want to read news articles
+                    read_news = st.button("📰 Read Latest News Articles on Guardian:")
+                    if read_news:
+                        topic_for_news = user_query
+                        news_articles = get_latest_news(topic_for_news)
+                        display_news_articles(news_articles)
 
                 else:
                     st.warning(f"❌ Failed to retrieve content for the selected page.")
