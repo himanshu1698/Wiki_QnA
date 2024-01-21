@@ -23,7 +23,7 @@ def search_wikipedia(query):
 
 # Function to get latest news articles from The Guardian
 def get_latest_news(topic):
-    api_key = "YOUR_GUARDIAN_API_KEY"  # Replace with your actual API key
+    api_key = " 8c202a88-78e2-4936-b5c7-f4b58299bcf1"  # Replace with your actual API key
     base_url = "https://content.guardianapis.com/search"
     params = {
         'q': topic,
